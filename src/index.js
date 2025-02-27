@@ -58,6 +58,11 @@ export default {
     //实际用这个cookie请求grok
     headers.set("cookie", grokCookie || '');
     headers.delete("Referer");
+    //删除可能暴露IP的请求头
+    headers.delete('CF-Connecting-IP');
+    headers.delete('X-Forwarded-For');
+    headers.delete('X-Real-IP');
+    headers.delete('True-Client-IP');
 
     try {
         const fetchResponse = await fetch(targetFullUrl.toString(), {
