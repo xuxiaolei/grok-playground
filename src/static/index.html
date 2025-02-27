@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grok账户管理</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .account {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            position: relative;
+        }
+        .account.selected {
+            background-color: #e6f7ff;
+            border-color: #1890ff;
+        }
+        .delete-btn {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            background: #ff4d4f;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        textarea {
+            width: 100%;
+            height: 80px;
+            margin: 10px 0;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .radio-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .radio-container input {
+            margin-right: 10px;
+        }
+        h2 {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Grok账户管理</h1>
+    
+    <div id="accounts-container">
+        <!-- 账户将在这里动态生成 -->
+    </div>
+    
+    <button id="add-account">添加新账户</button>
+    
+    <h2>当前选中的账户</h2>
+    <div id="selected-account-info">未选择任何账户</div>
+
+    <script>
+        // 存储账户的数组
+        let accounts = [];
+        // 当前选中的账户ID
+        let selectedAccountId = null;
+        
+        // 从localStorage加载账户
+        function loadAccounts() {
+            const savedAccounts = localStorage.getItem('cookieAccounts');
+            if (savedAccounts) {
+                accounts = JSON.parse(savedAccounts);
+            }
+            
+            // 加载选中的账户
+            selectedAccountId = localStorage.getItem('selectedAccountId');
+            
+            renderAccounts();
+            updateSelectedAccountDiv();
+        }
+        
+        // 保存账户到localStorage
+        function saveAccounts() {
+            localStorage.setItem('cookieAccounts', JSON.stringify(accounts));
+        }
+        
+        // 渲染账户列表
+        function renderAccounts() {
+            const container = document.getElementById('accounts-container');
+            container.innerHTML = '';
+            
+            accounts.forEach((account, index) => {
+                const accountDiv = document.createElement('div');
+                accountDiv.className = 'account';
+                if (account.id === selectedAccountId) {
+                    accountDiv.classList.add('selected');
+                }
+                
+                const radioContainer = document.createElement('div');
+                radioContainer.className = 'radio-container';
+                
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = 'account';
+                radio.id = `account-${account.id}`;
+                radio.checked = account.id === selectedAccountId;
+                radio.addEventListener('change', () => selectAccount(account.id));
+                
+                const label = document.createElement('label');
+                label.htmlFor = `account-${account.id}`;
+                label.textContent = `账户 ${index + 1}`;
+                
+                radioContainer.appendChild(radio);
+                radioContainer.appendChild(label);
+                
+                const textarea = document.createElement('textarea');
+                textarea.placeholder = '在此粘贴Cookie字符串...';
+                textarea.value = account.cookie || '';
+                textarea.id = `cookie-${account.id}`;
+                textarea.addEventListener('input', () => {
+                    account.cookie = textarea.value;
+                    saveAccounts();
+                    
+                    if (account.id === selectedAccountId) {
+                        // 将选中账户保存到grok_cookie中
+                        document.cookie = `grok_cookie=${encodeURIComponent(account.cookie)}; path=/; max-age=31536000`;
+                        updateSelectedAccountDiv();
+                    }
+                });
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = '删除';
+                deleteBtn.addEventListener('click', () => deleteAccount(account.id));
+                
+                accountDiv.appendChild(radioContainer);
+                accountDiv.appendChild(textarea);
+                accountDiv.appendChild(deleteBtn);
+                
+                container.appendChild(accountDiv);
+            });
+        }
+        
+        // 添加新账户
+        function addAccount() {
+            const newId = Date.now().toString();
+            accounts.push({
+                id: newId,
+                cookie: ''
+            });
+            renderAccounts();
+        }
+        
+        // 删除账户
+        function deleteAccount(id) {
+            if (confirm('确定要删除此账户吗？')) {
+                accounts = accounts.filter(account => account.id !== id);
+                
+                if (selectedAccountId === id) {
+                    selectedAccountId = null;
+                    localStorage.removeItem('selectedAccountId');
+                    updateSelectedAccountDiv();
+                }
+                
+                saveAccounts();
+                renderAccounts();
+            }
+        }
+        
+        // 选择账户
+        function selectAccount(id) {
+            selectedAccountId = id;
+            localStorage.setItem('selectedAccountId', id);
+            
+            // 找到选中账户的cookie并保存
+            const selectedAccount = accounts.find(account => account.id === id);
+            if (selectedAccount) {
+                // 将选中账户保存到grok_cookie中
+                document.cookie = `grok_cookie=${encodeURIComponent(selectedAccount.cookie)}; path=/; max-age=31536000`;
+            }
+            
+            renderAccounts();
+            updateSelectedAccountDiv();
+        }
+        
+        // 更新选中账户信息显示
+        function updateSelectedAccountDiv() {
+            const infoDiv = document.getElementById('selected-account-info');
+            
+            if (!selectedAccountId) {
+                infoDiv.textContent = '未选择任何账户';
+                return;
+            }
+            
+            const selectedAccount = accounts.find(account => account.id === selectedAccountId);
+            if (!selectedAccount) {
+                infoDiv.textContent = '所选账户不存在';
+                return;
+            }
+            
+            const accountIndex = accounts.findIndex(account => account.id === selectedAccountId);
+            
+            infoDiv.innerHTML = `
+                <p><strong>当前选中：</strong> 账户 ${accountIndex + 1}</p>
+                <p><strong>Cookie：</strong> ${selectedAccount.cookie ? selectedAccount.cookie.substring(0, 50) + '...' : '无'}</p>
+            `;
+        }
+        
+        // 初始化事件监听
+        document.getElementById('add-account').addEventListener('click', addAccount);
+        
+        // 页面加载时初始化
+        window.addEventListener('load', () => {
+            loadAccounts();
+            
+            // 如果有账户但没有选中任何账户，则默认选中第一个
+            if (!selectedAccountId && accounts.length > 0) {
+                selectAccount(accounts[0].id);
+            }
+        });
+    </script>
+</body>
+</html>
