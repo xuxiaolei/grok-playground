@@ -2,7 +2,7 @@
 # Grok3 2.0 游乐场
 
 ### 作者：技术爬爬虾
-B站，YouTube，抖音，公众号 全网同名。转载请注明作者。
+[B站](https://space.bilibili.com/316183842)，[Youtube](https://www.youtube.com/@Tech_Shrimp)，抖音，公众号 全网同名。转载请注明作者。
 
 ## 项目简介
 #### Demo: [https://grok.210718.xyz](https://grok.210718.xyz)
@@ -42,6 +42,11 @@ B站，YouTube，抖音，公众号 全网同名。转载请注明作者。
    </details>
 6. 点击 <b>Deploy Project</b>
 7. 部署成功后获得域名，点开即用。
+
+
+#### 有用的话帮忙B站或者Youtube点个关注~
+[https://space.bilibili.com/316183842](https://space.bilibili.com/316183842)<br>
+[https://www.youtube.com/@Tech_Shrimp](https://www.youtube.com/@Tech_Shrimp)
 
 ## 本地调试
 
